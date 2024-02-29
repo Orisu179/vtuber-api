@@ -1,5 +1,6 @@
-CREATE TABLE "vtubers" (
-	"uuid" BIGSERIAL PRIMARY KEY AUTO_INCREMENT,
+CREATE TABLE Vtubers (
+	"uuid" BIGSERIAL AUTO_INCREMENT,
+	"groups_id" SERIAL,
 	"name_default" VARCHAR NOT NULL,
 	"name_en" VARCHAR,
 	"name_jp" VARCHAR,
@@ -9,6 +10,8 @@ CREATE TABLE "vtubers" (
 	"youtube_link" VARCHAR NOT NULL,
 	"languages" CHAR(2) NOT NULL,
 	"debut_date" DATE, 
+	PRIMARY KEY ("uuid"),
+	FOREIGN KEY ("groups_id") REFERENCES Groups("id")
 );
 
 -- TODO Relate platforms to accounts instead of just youtube
@@ -18,13 +21,8 @@ CREATE TABLE "vtubers" (
 	-- "uri_template" VARCHAR NOT NULL,
 -- );
 
-CREATE TABLE "groups" (
+CREATE TABLE Groups (
 	"id" SERIAL PRIMARY KEY,
-	"vtuber_id" BIGSERIAL,
 	"name" VARCHAR(30) NOT NULL,
 	"website" VARCHAR,
 );
-
-ALTER TABLE "groups" ADD FOREIGN KEY ("vtuber_id") REFERENCES "vtuber" ("uuid");
-
-CREATE INDEX ON "groups" ("vtuber_id")
