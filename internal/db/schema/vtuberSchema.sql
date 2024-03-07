@@ -1,5 +1,17 @@
+
+CREATE TABLE Platforms (
+                           "platforms_id" SERIAL PRIMARY KEY,
+                           "uri_template" VARCHAR NOT NULL
+);
+
+CREATE TABLE Groups (
+                        "groups_id" SERIAL PRIMARY KEY,
+                        "name" VARCHAR(30) NOT NULL,
+                        "website" VARCHAR
+);
+
 CREATE TABLE Vtubers (
-	"vtubers_id" BIGSERIAL AUTO_INCREMENT,
+	"vtubers_id" UUID,
 	"groups_id" SERIAL,
 	"name_default" VARCHAR NOT NULL,
 	"name_en" VARCHAR,
@@ -11,19 +23,6 @@ CREATE TABLE Vtubers (
 	PRIMARY KEY ("vtubers_id"),
 	FOREIGN KEY ("groups_id") REFERENCES Groups("groups_id")
 );
-
--- TODO Relate platforms to accounts instead of just youtube
- CREATE TABLE Platforms (
-	"platforms_id" SERIAL PRIMARY KEY,
-	"uri_template" VARCHAR NOT NULL,
-);
-
-CREATE TABLE Groups (
-	"groups_id" SERIAL PRIMARY KEY,
-	"name" VARCHAR(30) NOT NULL,
-	"website" VARCHAR,
-);
-
 -- Relations
 CREATE TABLE streamOn (
 	"account_id" BIGSERIAL NOT NULL,
