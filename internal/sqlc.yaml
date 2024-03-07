@@ -5,7 +5,7 @@ sql:
       schema: "./db/migrations/000001_init_schema.up.sql"
       gen:
           go:
-              package: "sqlc"
+              package: "db"
               out: "sqlc"
               sql_package: "database/sql"
 overrides:
