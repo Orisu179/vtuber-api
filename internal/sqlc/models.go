@@ -5,20 +5,18 @@
 package db
 
 import (
-	"database/sql"
-
-	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Group struct {
 	GroupsID int32
 	Name     string
-	Website  sql.NullString
+	Website  pgtype.Text
 }
 
 type Link struct {
 	AccountID   int64
-	VtubersID   uuid.UUID
+	VtubersID   pgtype.UUID
 	PlatformsID int32
 }
 
@@ -29,14 +27,14 @@ type Platform struct {
 }
 
 type Vtuber struct {
-	VtubersID   uuid.UUID
-	GroupsID    sql.NullInt32
+	VtubersID   pgtype.UUID
+	GroupsID    pgtype.Int4
 	NameDefault string
-	NameEn      sql.NullString
-	NameJp      sql.NullString
-	NameCn      sql.NullString
-	Bio         sql.NullString
+	NameEn      pgtype.Text
+	NameJp      pgtype.Text
+	NameCn      pgtype.Text
+	Bio         pgtype.Text
 	Languages   []string
-	DebutDate   sql.NullTime
-	Gender      sql.NullString
+	DebutDate   pgtype.Date
+	Gender      pgtype.Text
 }

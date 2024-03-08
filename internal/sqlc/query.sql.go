@@ -7,10 +7,8 @@ package db
 
 import (
 	"context"
-	"database/sql"
 
-	"github.com/google/uuid"
-	"github.com/lib/pq"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createAuthor = `-- name: CreateAuthor :one
@@ -25,7 +23,7 @@ type CreateAuthorParams struct {
 }
 
 func (q *Queries) CreateAuthor(ctx context.Context, arg CreateAuthorParams) (Platform, error) {
-	row := q.db.QueryRowContext(ctx, createAuthor, arg.PlatformsID, arg.UriTemplate)
+	row := q.db.QueryRow(ctx, createAuthor, arg.PlatformsID, arg.UriTemplate)
 	var i Platform
 	err := row.Scan(&i.PlatformsID, &i.Name, &i.UriTemplate)
 	return i, err
@@ -40,11 +38,11 @@ RETURNING groups_id, name, website
 type CreateGroupParams struct {
 	GroupsID int32
 	Name     string
-	Website  sql.NullString
+	Website  pgtype.Text
 }
 
 func (q *Queries) CreateGroup(ctx context.Context, arg CreateGroupParams) (Group, error) {
-	row := q.db.QueryRowContext(ctx, createGroup, arg.GroupsID, arg.Name, arg.Website)
+	row := q.db.QueryRow(ctx, createGroup, arg.GroupsID, arg.Name, arg.Website)
 	var i Group
 	err := row.Scan(&i.GroupsID, &i.Name, &i.Website)
 	return i, err
@@ -58,12 +56,12 @@ RETURNING account_id, vtubers_id, platforms_id
 
 type CreateLinkParams struct {
 	AccountID   int64
-	VtubersID   uuid.UUID
+	VtubersID   pgtype.UUID
 	PlatformsID int32
 }
 
 func (q *Queries) CreateLink(ctx context.Context, arg CreateLinkParams) (Link, error) {
-	row := q.db.QueryRowContext(ctx, createLink, arg.AccountID, arg.VtubersID, arg.PlatformsID)
+	row := q.db.QueryRow(ctx, createLink, arg.AccountID, arg.VtubersID, arg.PlatformsID)
 	var i Link
 	err := row.Scan(&i.AccountID, &i.VtubersID, &i.PlatformsID)
 	return i, err
@@ -76,17 +74,17 @@ RETURNING vtubers_id, groups_id, name_default, name_en, name_jp, name_cn, bio, l
 `
 
 type CreateVtuberParams struct {
-	GroupsID    sql.NullInt32
+	GroupsID    pgtype.Int4
 	NameDefault string
 	Languages   []string
-	DebutDate   sql.NullTime
+	DebutDate   pgtype.Date
 }
 
 func (q *Queries) CreateVtuber(ctx context.Context, arg CreateVtuberParams) (Vtuber, error) {
-	row := q.db.QueryRowContext(ctx, createVtuber,
+	row := q.db.QueryRow(ctx, createVtuber,
 		arg.GroupsID,
 		arg.NameDefault,
-		pq.Array(arg.Languages),
+		arg.Languages,
 		arg.DebutDate,
 	)
 	var i Vtuber
@@ -98,7 +96,7 @@ func (q *Queries) CreateVtuber(ctx context.Context, arg CreateVtuberParams) (Vtu
 		&i.NameJp,
 		&i.NameCn,
 		&i.Bio,
-		pq.Array(&i.Languages),
+		&i.Languages,
 		&i.DebutDate,
 		&i.Gender,
 	)
@@ -115,21 +113,21 @@ LIMIT 1
 `
 
 type GetVtuberRow struct {
-	VtubersID   uuid.UUID
-	GroupsID    sql.NullInt32
+	VtubersID   pgtype.UUID
+	GroupsID    pgtype.Int4
 	NameDefault string
-	NameEn      sql.NullString
-	NameJp      sql.NullString
-	NameCn      sql.NullString
-	Bio         sql.NullString
+	NameEn      pgtype.Text
+	NameJp      pgtype.Text
+	NameCn      pgtype.Text
+	Bio         pgtype.Text
 	Languages   []string
-	DebutDate   sql.NullTime
-	Gender      sql.NullString
+	DebutDate   pgtype.Date
+	Gender      pgtype.Text
 	GroupName   string
 }
 
 func (q *Queries) GetVtuber(ctx context.Context, nameDefault string) (GetVtuberRow, error) {
-	row := q.db.QueryRowContext(ctx, getVtuber, nameDefault)
+	row := q.db.QueryRow(ctx, getVtuber, nameDefault)
 	var i GetVtuberRow
 	err := row.Scan(
 		&i.VtubersID,
@@ -139,7 +137,7 @@ func (q *Queries) GetVtuber(ctx context.Context, nameDefault string) (GetVtuberR
 		&i.NameJp,
 		&i.NameCn,
 		&i.Bio,
-		pq.Array(&i.Languages),
+		&i.Languages,
 		&i.DebutDate,
 		&i.Gender,
 		&i.GroupName,
@@ -154,21 +152,21 @@ JOIN Groups g ON vt.groups_id = g.groups_id
 `
 
 type GetVtuberGroupsRow struct {
-	VtubersID   uuid.UUID
-	GroupsID    sql.NullInt32
+	VtubersID   pgtype.UUID
+	GroupsID    pgtype.Int4
 	NameDefault string
-	NameEn      sql.NullString
-	NameJp      sql.NullString
-	NameCn      sql.NullString
-	Bio         sql.NullString
+	NameEn      pgtype.Text
+	NameJp      pgtype.Text
+	NameCn      pgtype.Text
+	Bio         pgtype.Text
 	Languages   []string
-	DebutDate   sql.NullTime
-	Gender      sql.NullString
+	DebutDate   pgtype.Date
+	Gender      pgtype.Text
 	GroupName   string
 }
 
 func (q *Queries) GetVtuberGroups(ctx context.Context) ([]GetVtuberGroupsRow, error) {
-	rows, err := q.db.QueryContext(ctx, getVtuberGroups)
+	rows, err := q.db.Query(ctx, getVtuberGroups)
 	if err != nil {
 		return nil, err
 	}
@@ -184,7 +182,7 @@ func (q *Queries) GetVtuberGroups(ctx context.Context) ([]GetVtuberGroupsRow, er
 			&i.NameJp,
 			&i.NameCn,
 			&i.Bio,
-			pq.Array(&i.Languages),
+			&i.Languages,
 			&i.DebutDate,
 			&i.Gender,
 			&i.GroupName,
@@ -192,9 +190,6 @@ func (q *Queries) GetVtuberGroups(ctx context.Context) ([]GetVtuberGroupsRow, er
 			return nil, err
 		}
 		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -211,14 +206,14 @@ FROM links l
 
 type GetVtuberPlatformRow struct {
 	AccountID   int64
-	VtubersID   uuid.UUID
+	VtubersID   pgtype.UUID
 	PlatformsID int32
 	UriTemplate string
 	VtuberName  string
 }
 
 func (q *Queries) GetVtuberPlatform(ctx context.Context) ([]GetVtuberPlatformRow, error) {
-	rows, err := q.db.QueryContext(ctx, getVtuberPlatform)
+	rows, err := q.db.Query(ctx, getVtuberPlatform)
 	if err != nil {
 		return nil, err
 	}
@@ -236,9 +231,6 @@ func (q *Queries) GetVtuberPlatform(ctx context.Context) ([]GetVtuberPlatformRow
 			return nil, err
 		}
 		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
